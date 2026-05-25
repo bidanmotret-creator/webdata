@@ -204,3 +204,47 @@
 
 .btn-issues { background-color: #fef3c7; color: #d97706; border: 1px solid #fde68a; }
 .btn-issues:hover { background-color: #f59e0b; color: white; }
+
+/* Responsif untuk HP */
+@media (max-width: 768px) {
+    /* Layout grid berubah dari 3 kolom jadi 1 kolom */
+    .eos-container > div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Tabel jadi scrollable */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Tombol lebih besar agar mudah dipencet jempol */
+    .btn-tambah {
+        padding: 12px !important;
+        font-size: 0.9rem;
+    }
+
+    /* Mengurangi padding agar konten tidak terlalu lebar */
+    .panel-card {
+        padding: 10px !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .eos-table thead { display: none; } /* Sembunyikan header tabel */
+    .eos-table tr { 
+        display: block; 
+        margin-bottom: 15px; 
+        border: 1px solid #ddd; 
+        padding: 10px;
+    }
+    .eos-table td { 
+        display: block; 
+        text-align: right; 
+    }
+    .eos-table td::before { 
+        content: attr(data-label); /* Anda harus menambah data-label di setiap <td> */
+        float: left; 
+        font-weight: bold; 
+    }
+}
