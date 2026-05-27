@@ -1,0 +1,324 @@
+function doGet(e) {
+  if (!e) e = { parameter: {} };
+  var ss = SpreadsheetApp.openById("1QGkCIiXum7VNwWNlqOfbciwcVGDBS61Fu6qCjfU2yQo");
+  var action = e.parameter ? e.parameter.action : null;
+
+  var sheetData = ss.getSheets()[0];
+  var sheetConfig = ss.getSheetByName("acc.chart");
+  var sheetAds = ss.getSheetByName("Data_Ads");
+
+  var data = sheetData.getDataRange().getValues();
+  var clients = [];
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0] != "") {
+      clients.push({
+        tanggal_chat: data[i][0], nama: data[i][1], no_hp: data[i][2], sumber: data[i][3],
+        alamat: data[i][4], minat: data[i][5], data_anak: data[i][6], gender_anak: data[i][7],
+        status: data[i][8], paket: data[i][9], varian: data[i][10], promo: data[i][11],
+        jadwal: data[i][12], lokasi: data[i][13], transport: data[i][14], total: data[i][15],
+        tgl_bayar1: data[i][16], jml_bayar1: data[i][17], tgl_bayar2: data[i][18], jml_bayar2: data[i][19],
+        sisa_hutang: data[i][20], hpp: data[i][21]
+      });
+    }
+  }
+
+  var marketing = [];
+  if (sheetAds) {
+    var adsData = sheetAds.getDataRange().getValues();
+    for (var j = 1; j < adsData.length; j++) {
+      if (adsData[j][0] != "") {
+        marketing.push({
+          tanggal: adsData[j][0], campaign: adsData[j][1], spend: adsData[j][2], dash_leads: adsData[j][3]
+        });
+      }
+    }
+  }
+
+  var configData = {
+    sumber: ["Meta Ads", "Instagram Organik", "Referal Bidan", "TikTok", "Walk-in Studio"],
+    minat: ["Newborn", "Maternity", "Bidan Motret", "Sitter / Birthday", "Family Portrait"],
+    lokasi: ["Studio Sepang Jaya", "Home Service (Dalam Kota)", "Home Service (Luar Kota)"],
+    promo: ["Tanpa Promo", "Promo Spesial", "Diskon Referal"],
+    paketMap: { "Newborn": ["Basic", "Premium"], "Maternity": ["Standard", "Glamour"] },
+    varianMap: { "Basic": ["Natural"], "Standard": ["Elegan"] },
+    waTemplate: "Halo Ibu [NAMA], konfirmasi sesi [MINAT]",
+    orgChart: [],
+    supportingProducts: []
+  };
+
+  if (sheetConfig) {
+    var val = sheetConfig.getRange("A2").getValue();
+    if (val && val.toString().trim() !== "") {
+      try { configData = JSON.parse(val); } catch (err) { }
+    }
+  }
+
+  configData.rocks = []; configData.todos = []; configData.issues = [];
+  var sEOS = ss.getSheetByName("eos.data");
+  if (sEOS) {
+    var pData = sEOS.getRange("A5:C5").getValues()[0];
+    if (pData) configData.exec_plan = { rev: pData[0] || "", profit: pData[1] || "", goals: pData[2] || "" };
+
+    var last = Math.max(sEOS.getLastRow(), 5);
+    configData.rocks = sEOS.getRange("E5:H" + last).getValues().filter(r => r[1] !== "").map(r => ({ kuartal: r[0], teks: r[1], pic: r[2], status: r[3] }));
+    configData.todos = sEOS.getRange("J5:M" + last).getValues().filter(t => t[0] !== "").map(t => ({ teks: t[0], pic: t[1], deadline: t[2], done: t[3] === "Selesai" }));
+    configData.issues = sEOS.getRange("O5:Y" + last).getValues().filter(i => i[2] !== "").map(i => ({ tglDibuat: i[0], prio: i[1], teks: i[2], divisi: i[3], pic: i[4], deadline: i[5], tglSolve: i[6], status: i[7], discuss: i[8], rock: i[9], bukti: i[10] }));
+  }
+
+  return ContentService.createTextOutput(JSON.stringify({
+    clients: clients,
+    marketing: marketing,
+    config: configData
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  try {
+    var ss = SpreadsheetApp.openById("1QGkCIiXum7VNwWNlqOfbciwcVGDBS61Fu6qCjfU2yQo");
+    var sheetData = ss.getSheets()[0];
+    var action = e.parameter.action;
+
+    // =========================================================
+    // JALUR 1: KHUSUS UNTUK ACC.CHART (Struktur & Produk)
+    // =========================================================
+    if (action === "saveConfig") {
+      var configJson = e.parameter.configJson;
+      var configObj = JSON.parse(configJson);
+
+      var sheetConfig = ss.getSheetByName("acc.chart");
+      if (!sheetConfig) sheetConfig = ss.insertSheet("acc.chart");
+
+      sheetConfig.getRange("A1").setValue("⚠️ AREA SISTEM (JANGAN DIHAPUS) ⚠️").setFontWeight("bold").setFontColor("red");
+      sheetConfig.getRange("A2").setNumberFormat("@").setValue(configJson);
+
+      var headerRange = sheetConfig.getRange("A4:D4");
+      headerRange.setValues([["Tingkat / Level", "Posisi / Jabatan", "Nama Pengemban", "Tanggung Jawab Utama"]]).setFontWeight("bold").setBackground("#0f172a").setFontColor("white");
+
+      var lastRowOrg = Math.max(sheetConfig.getLastRow(), 5);
+      if (lastRowOrg >= 5) sheetConfig.getRange(5, 1, lastRowOrg, 4).clearContent();
+
+      var orgData = configObj.orgChart || [];
+      if (orgData.length > 0) {
+        var tableValues = [];
+        for (var i = 0; i < orgData.length; i++) {
+          tableValues.push(["Level " + (orgData[i].level || "1"), orgData[i].title || "", orgData[i].name || "", orgData[i].roles || ""]);
+        }
+        sheetConfig.getRange(5, 1, tableValues.length, 4).setValues(tableValues);
+        sheetConfig.getRange(5, 4, tableValues.length, 1).setWrap(true);
+        sheetConfig.setColumnWidth(1, 120); sheetConfig.setColumnWidth(2, 200);
+        sheetConfig.setColumnWidth(3, 150); sheetConfig.setColumnWidth(4, 300);
+      }
+
+      var sheetProd = ss.getSheetByName("produk.pendukung");
+      if (!sheetProd) sheetProd = ss.insertSheet("produk.pendukung");
+
+      var headerProd = sheetProd.getRange("A1:D1");
+      headerProd.setValues([["Nama Produk / Item Pendukung", "Kategori", "HPP / Modal (Rp)", "Harga Jual Standar (Rp)"]]).setFontWeight("bold").setBackground("#0f172a").setFontColor("white");
+
+      var lastRowProd = Math.max(sheetProd.getLastRow(), 2);
+      if (lastRowProd >= 2) sheetProd.getRange(2, 1, lastRowProd, 4).clearContent();
+
+      var prodData = configObj.supportingProducts || [];
+      if (prodData.length > 0) {
+        var prodValues = [];
+        for (var j = 0; j < prodData.length; j++) {
+          prodValues.push([prodData[j].name || "", prodData[j].category || "", prodData[j].hpp || 0, prodData[j].price || 0]);
+        }
+        sheetProd.getRange(2, 1, prodValues.length, 4).setValues(prodValues);
+        sheetProd.setColumnWidth(1, 260); sheetProd.setColumnWidth(2, 140);
+        sheetProd.setColumnWidth(3, 140); sheetProd.setColumnWidth(4, 140);
+      }
+
+      return ContentService.createTextOutput(JSON.stringify({ "result": "success" })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // =========================================================
+    // JALUR 2: KHUSUS UNTUK EOS.DATA (Rocks, Todos, Issues)
+    // =========================================================
+    if (action === "saveEOS") {
+      var configJson = e.parameter.configJson;
+      var configObj = JSON.parse(configJson);
+      var sheetEOS = ss.getSheetByName("eos.data");
+      if (!sheetEOS) sheetEOS = ss.insertSheet("eos.data");
+
+      // Gunakan flush() di akhir agar data benar-benar tersimpan
+      sheetEOS.getRange("A2").setValue(configJson);
+
+      if (configObj.exec_plan) {
+        sheetEOS.getRange("A5:C5").setValues([[
+          configObj.exec_plan.rev || "", 
+          configObj.exec_plan.profit || "", 
+          configObj.exec_plan.goals || ""
+        ]]);
+      }
+
+      // Bersihkan & Tulis Ulang Rocks
+      sheetEOS.getRange("E5:H100").clearContent();
+      if (configObj.rocks && configObj.rocks.length > 0) {
+        var rArr = configObj.rocks.map(r => [r.kuartal || "", r.teks || "", r.pic || "", r.status || ""]);
+        sheetEOS.getRange(5, 5, rArr.length, 4).setValues(rArr);
+      }
+
+      // Bersihkan & Tulis Ulang Todos
+      sheetEOS.getRange("J5:M100").clearContent();
+      if (configObj.todos && configObj.todos.length > 0) {
+        var tArr = configObj.todos.map(t => [t.teks || "", t.pic || "", t.deadline || "", t.done ? "Selesai" : "Belum"]);
+        sheetEOS.getRange(5, 10, tArr.length, 4).setValues(tArr);
+      }
+
+      // Bersihkan & Tulis Ulang Issues
+      sheetEOS.getRange("O5:Y100").clearContent();
+      if (configObj.issues && configObj.issues.length > 0) {
+        var iArr = configObj.issues.map(i => [
+          i.tglDibuat || "", i.prio || "", i.teks || "", i.divisi || "", i.pic || "", 
+          i.deadline || "", i.tglSolve || "", i.status || "", i.discuss || "", i.rock || "", i.bukti || ""
+        ]);
+        sheetEOS.getRange(5, 15, iArr.length, 11).setValues(iArr);
+      }
+
+      SpreadsheetApp.flush(); // <--- PENTING: Memaksa penyimpanan
+      return ContentService.createTextOutput(JSON.stringify({"result": "success"})).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // =========================================================
+    // JALUR 3: INSERT & UPDATE LEAD LAMA
+    // =========================================================
+    if (action === "insert") {
+      var noHpBaru = e.parameter.no_hp.toString().trim();
+      var namaFinal = e.parameter.nama;
+      var dataHistori = sheetData.getDataRange().getValues();
+
+      for (var h = 1; h < dataHistori.length; h++) {
+        var namaLama = dataHistori[h][1];
+        var waLama = dataHistori[h][2].toString().trim();
+        if (waLama === noHpBaru && namaLama !== "") {
+          namaFinal = namaLama;
+          break;
+        }
+      }
+
+      sheetData.appendRow([
+        e.parameter.tanggal_chat, namaFinal, e.parameter.no_hp, e.parameter.sumber, "", 
+        e.parameter.minat, e.parameter.data_anak, "", e.parameter.status, "-", "-", "-", 
+        "", "-", "", 0, "", 0, "", 0, 0, 0
+      ]);
+      return ContentService.createTextOutput(JSON.stringify({ "result": "success" })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (action === "update") {
+      var dataUpdate = sheetData.getDataRange().getValues();
+      for (var k = 1; k < dataUpdate.length; k++) {
+        var rowDate = "";
+        try {
+          var d = new Date(dataUpdate[k][0]);
+          if (!isNaN(d.getTime())) {
+            var m = '' + (d.getMonth() + 1), day = '' + d.getDate(), y = d.getFullYear();
+            if (m.length < 2) m = '0' + m;
+            if (day.length < 2) day = '0' + day;
+            rowDate = [y, m, day].join('-');
+          }
+        } catch (ex) { }
+
+        if (dataUpdate[k][2].toString() === e.parameter.no_hp.toString() && rowDate === e.parameter.tanggal_chat && dataUpdate[k][5] === e.parameter.minat) {
+          var rowIndex = k + 1;
+          var total = Number(e.parameter.total) || 0;
+          var dp = Number(e.parameter.jml_bayar1) || 0;
+          var lunas = Number(e.parameter.jml_bayar2) || 0;
+          var sisa = total - (dp + lunas);
+
+          sheetData.getRange(rowIndex, 9).setValue(e.parameter.status);
+          sheetData.getRange(rowIndex, 10).setValue(e.parameter.paket);
+          sheetData.getRange(rowIndex, 11).setValue(e.parameter.varian);
+          sheetData.getRange(rowIndex, 12).setValue(e.parameter.promo);
+          sheetData.getRange(rowIndex, 13).setValue(e.parameter.jadwal);
+          sheetData.getRange(rowIndex, 14).setValue(e.parameter.lokasi);
+          sheetData.getRange(rowIndex, 15).setValue(e.parameter.transport);
+          sheetData.getRange(rowIndex, 16).setValue(total);
+          sheetData.getRange(rowIndex, 17).setValue(e.parameter.tgl_bayar1);
+          sheetData.getRange(rowIndex, 18).setValue(dp);
+          sheetData.getRange(rowIndex, 19).setValue(e.parameter.tgl_bayar2);
+          sheetData.getRange(rowIndex, 20).setValue(lunas);
+          sheetData.getRange(rowIndex, 21).setValue(sisa);
+          sheetData.getRange(rowIndex, 22).setValue(e.parameter.hpp);
+          break;
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({ "result": "success" })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({ "result": "success" })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ "result": "error", "error": error.toString() })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// Fungsi Pelengkap
+function onEdit(e) {
+  if (!e || !e.range) return;
+  var sheet = e.source.getActiveSheet();
+  var range = e.range;
+
+  if (sheet.getName() === "Sheet1" && range.getColumn() === 3 && range.getRow() > 1) {
+    var noWaBaru = range.getValue().toString().trim();
+    var barisAktif = range.getRow();
+
+    if (noWaBaru === "") return;
+
+    if (barisAktif > 2) {
+      var dataHistori = sheet.getRange(2, 2, barisAktif - 2, 2).getValues();
+
+      for (var i = 0; i < dataHistori.length; i++) {
+        var namaLama = dataHistori[i][0];
+        var waLama = dataHistori[i][1].toString().trim();
+
+        if (waLama === noWaBaru && namaLama !== "") {
+          sheet.getRange(barisAktif, 2).setValue(namaLama);
+          e.source.toast("Sistem menemukan riwayat pelanggan! Nama otomatis diisi: " + namaLama, "✅ Repeat Order Terdeteksi", 5);
+          break;
+        }
+      }
+    }
+  }
+}
+
+function sinkronisasiNamaLamaMasaLalu() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Sheet1");
+
+  if (!sheet) {
+    Logger.log("Sheet1 tidak ditemukan!");
+    return;
+  }
+
+  var range = sheet.getDataRange();
+  var data = range.getValues();
+  var mapWaKeNama = {};
+  var jumlahPerubahan = 0;
+
+  for (var i = 1; i < data.length; i++) {
+    var nama = data[i][1]; 
+    var wa = data[i][2].toString().trim(); 
+
+    if (wa !== "" && nama !== "") {
+      if (!mapWaKeNama[wa]) {
+        mapWaKeNama[wa] = nama;
+      }
+    }
+  }
+
+  for (var j = 1; j < data.length; j++) {
+    var waCheck = data[j][2].toString().trim();
+    var namaSekarang = data[j][1];
+
+    if (waCheck !== "" && mapWaKeNama[waCheck]) {
+      var namaSeharusnya = mapWaKeNama[waCheck];
+
+      if (namaSekarang !== namaSeharusnya) {
+        sheet.getRange(j + 1, 2).setValue(namaSeharusnya); 
+        jumlahPerubahan++;
+      }
+    }
+  }
+  ss.toast("Berhasil menyelaraskan " + jumlahPerubahan + " nama pelanggan lama.", "🎉 Pembersihan Selesai", 7);
+}
