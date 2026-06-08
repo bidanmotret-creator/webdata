@@ -1,0 +1,1628 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Order Handcasting - Bidan Motret</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Fredoka:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --pink: #FF69B4;
+            --pink-light: #FFE5F1;
+            --teal: #00A699;
+            --teal-light: #E5F7F5;
+            --gold: #D4AF37;
+            --silver: #A8A9AD;
+            --rose-gold: #B76E79;
+            --white-pearl: #F8F4EE;
+            --bg: #F8FAFC;
+            --text-dark: #1A1A2E;
+            --text-muted: #636E72;
+            --border: #E2E8F0;
+            --success: #00C896;
+            --error: #FF4757;
+            --shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: var(--bg); color: var(--text-dark); }
+
+        /* ══ HEADER ══ */
+        header {
+            background: white;
+            padding: 14px 5%;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 200;
+        }
+        .back-btn {
+            text-decoration: none;
+            color: var(--teal);
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .header-title {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.3rem;
+            background: linear-gradient(135deg, var(--pink), var(--teal));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ══ PROGRESS STEPS ══ */
+        .progress-bar {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 16px 5%;
+        }
+        .progress-steps {
+            max-width: 700px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            flex: 1;
+            position: relative;
+            cursor: pointer;
+        }
+        .step-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            transition: all 0.3s;
+            z-index: 2;
+            position: relative;
+        }
+        .step.active .step-circle {
+            background: linear-gradient(135deg, var(--pink), #FF85A2);
+            border-color: var(--pink);
+            color: white;
+            box-shadow: 0 3px 12px rgba(255,105,180,0.35);
+        }
+        .step.done .step-circle {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+        .step.done .step-circle::before { content: "✓"; }
+        .step-label {
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-align: center;
+            white-space: nowrap;
+        }
+        .step.active .step-label { color: var(--pink); font-weight: 700; }
+        .step.done .step-label { color: var(--success); }
+        .step-line {
+            flex: 1;
+            height: 2px;
+            background: var(--border);
+            margin-bottom: 18px;
+        }
+        .step-line.done { background: var(--success); }
+
+        /* ══ LAYOUT ══ */
+        .order-container {
+            max-width: 1200px;
+            margin: 30px auto 100px;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 1fr 1.4fr;
+            gap: 35px;
+        }
+
+        /* ══ GALLERY / LEFT PANEL ══ */
+        .gallery-section { position: sticky; top: 130px; height: fit-content; }
+
+        .main-image {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 6rem;
+            margin-bottom: 14px;
+            box-shadow: var(--shadow);
+            transition: background 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .color-preview-label {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            background: rgba(0,0,0,0.55);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 5px 12px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        .thumbnail-list { display: flex; gap: 10px; margin-bottom: 20px; }
+        .thumb {
+            width: 72px; height: 72px;
+            background: var(--teal-light);
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .thumb:hover, .thumb.active { border-color: var(--teal); transform: scale(1.05); }
+
+        .prod-title { font-family: 'Fredoka', sans-serif; font-size: 1.9rem; font-weight: 600; line-height: 1.2; }
+        .prod-desc { font-size: 0.9rem; color: var(--text-muted); margin: 8px 0 14px; line-height: 1.6; }
+        .base-price-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--teal-light);
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 14px;
+        }
+        .base-price-label { font-size: 0.82rem; color: var(--text-muted); font-weight: 500; }
+        .base-price-val { font-size: 1.4rem; font-weight: 700; color: var(--teal); }
+
+        .mitra-box {
+            background: white;
+            padding: 14px 16px;
+            border-radius: 10px;
+            border-left: 4px solid var(--pink);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .mitra-box small { font-size: 0.75rem; color: var(--text-muted); }
+        .mitra-box strong { display: block; font-size: 1rem; color: var(--text-dark); margin-top: 2px; }
+
+        .includes-box {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: var(--shadow);
+            margin-top: 14px;
+        }
+        .includes-box h4 { font-size: 0.85rem; color: var(--teal); font-weight: 700; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .include-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 0.88rem; color: var(--text-dark); border-bottom: 1px solid var(--border); }
+        .include-item:last-child { border-bottom: none; }
+        .include-item span { width: 20px; height: 20px; background: var(--teal-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: var(--teal); font-weight: 700; flex-shrink: 0; }
+
+        /* ══ CONFIG SECTION / RIGHT PANEL ══ */
+        .config-section {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: var(--shadow);
+        }
+
+        .form-step { display: none; }
+        .form-step.active { display: block; }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 22px;
+            padding-bottom: 14px;
+            border-bottom: 2px solid var(--border);
+        }
+        .section-num {
+            width: 28px; height: 28px;
+            background: linear-gradient(135deg, var(--pink), #FF85A2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .section-title-txt { font-size: 1.1rem; font-weight: 700; color: var(--teal); }
+        .section-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 1px; }
+
+        /* ══ FORM ELEMENTS ══ */
+        .form-group { margin-bottom: 18px; position: relative; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+        label {
+            display: block;
+            font-size: 0.88rem;
+            font-weight: 600;
+            margin-bottom: 7px;
+            color: var(--text-dark);
+        }
+        label .req { color: var(--pink); margin-left: 2px; }
+
+        input[type="text"],
+        input[type="tel"],
+        input[type="date"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.93rem;
+            background: #fff;
+            transition: all 0.25s;
+            color: var(--text-dark);
+            font-family: 'Poppins', sans-serif;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--teal);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0,166,153,0.12);
+        }
+        input.error, select.error, textarea.error {
+            border-color: var(--error);
+            box-shadow: 0 0 0 3px rgba(255,71,87,0.1);
+        }
+        .error-msg {
+            font-size: 0.78rem;
+            color: var(--error);
+            margin-top: 5px;
+            display: none;
+            align-items: center;
+            gap: 4px;
+        }
+        .error-msg.show { display: flex; }
+
+        .wa-preview {
+            font-size: 0.78rem;
+            color: var(--teal);
+            margin-top: 5px;
+            display: none;
+            align-items: center;
+            gap: 4px;
+        }
+        .wa-preview.show { display: flex; }
+
+        /* ══ ADD-ON GRID ══ */
+        .addon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .addon-card {
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            user-select: none;
+        }
+        .addon-card:hover { border-color: var(--teal); background: var(--teal-light); }
+        .addon-card.selected { border-color: var(--teal); background: var(--teal-light); }
+        .addon-icon { font-size: 1.8rem; }
+        .addon-name { font-size: 0.83rem; font-weight: 600; line-height: 1.3; }
+        .addon-price { font-size: 0.78rem; color: var(--pink); font-weight: 700; margin-top: 2px; }
+
+        /* ══ CUSTOM BUILDER ══ */
+        .cast-item {
+            background: var(--teal-light);
+            border: 1.5px solid rgba(0,166,153,0.25);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+        .cast-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .cast-label { font-size: 0.85rem; font-weight: 700; color: var(--teal); }
+        .btn-hapus {
+            background: var(--error);
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+        .btn-tambah {
+            width: 100%;
+            padding: 12px;
+            background: white;
+            color: var(--teal);
+            border: 2px dashed var(--teal);
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.2s;
+        }
+        .btn-tambah:hover { background: var(--teal-light); }
+
+        /* ══ JADWAL ══ */
+        .jadwal-info {
+            background: var(--pink-light);
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+        }
+
+        /* ══ SUMMARY ══ */
+        .summary-box {
+            background: var(--bg);
+            border: 1.5px dashed var(--teal);
+            border-radius: 12px;
+            padding: 18px;
+            margin-top: 24px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .summary-row:last-of-type { border-bottom: none; }
+        .summary-row .label { color: var(--text-muted); }
+        .summary-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 2px solid var(--teal);
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--pink);
+        }
+
+        /* ══ STEP NAV BUTTONS ══ */
+        .step-nav {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .btn-prev {
+            flex: 1;
+            padding: 13px;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+        .btn-prev:hover { border-color: var(--teal); color: var(--teal); }
+        .btn-next {
+            flex: 2;
+            padding: 13px;
+            background: linear-gradient(135deg, var(--teal), #008B8B);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 14px rgba(0,166,153,0.3);
+        }
+        .btn-next:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,166,153,0.4); }
+        .btn-submit-wa {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-top: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 16px rgba(37,211,102,0.3);
+        }
+        .btn-submit-wa:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,211,102,0.4); }
+
+        /* ══ FLOATING TOTAL (MOBILE) ══ */
+        .floating-total {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 2px solid var(--border);
+            padding: 12px 20px;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 150;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+        }
+        .float-label { font-size: 0.85rem; color: var(--text-muted); }
+        .float-price { font-size: 1.25rem; font-weight: 700; color: var(--pink); }
+        .float-btn {
+            background: linear-gradient(135deg, var(--teal), #008B8B);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        @media (max-width: 900px) {
+            .floating-total { display: flex; }
+            .order-container { grid-template-columns: 1fr; margin-bottom: 80px; }
+            .gallery-section { position: static; }
+            .form-row { grid-template-columns: 1fr; gap: 12px; }
+            .addon-grid { grid-template-columns: 1fr; }
+            .config-section { padding: 20px; }
+        }
+
+        /* ══ MODAL KONFIRMASI ══ */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 300;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 480px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+            animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.85) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-header { text-align: center; margin-bottom: 20px; }
+        .modal-icon { font-size: 3.5rem; margin-bottom: 8px; }
+        .modal-title { font-family: 'Fredoka', sans-serif; font-size: 1.6rem; color: var(--text-dark); }
+        .modal-subtitle { font-size: 0.88rem; color: var(--text-muted); margin-top: 4px; }
+        .order-number {
+            background: linear-gradient(135deg, var(--pink-light), var(--teal-light));
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center;
+            margin-bottom: 18px;
+        }
+        .order-number small { font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 4px; }
+        .order-number strong { font-size: 1.5rem; font-weight: 700; color: var(--pink); letter-spacing: 2px; }
+        .confirm-rows { margin-bottom: 18px; }
+        .confirm-row {
+            display: flex; justify-content: space-between; padding: 8px 0;
+            font-size: 0.88rem; border-bottom: 1px solid var(--border);
+        }
+        .confirm-row:last-child { border-bottom: none; }
+        .confirm-row .key { color: var(--text-muted); }
+        .confirm-row .val { font-weight: 600; text-align: right; max-width: 55%; }
+        .confirm-total {
+            display: flex; justify-content: space-between; font-size: 1.1rem;
+            font-weight: 700; color: var(--pink); padding: 12px 0;
+            border-top: 2px solid var(--border); margin-bottom: 18px;
+        }
+        .screenshot-hint {
+            font-size: 0.78rem; color: var(--text-muted); text-align: center;
+            background: var(--bg); padding: 8px; border-radius: 8px; margin-bottom: 16px;
+        }
+        .modal-actions { display: flex; gap: 10px; }
+        .btn-cancel {
+            flex: 1; padding: 12px; border: 1.5px solid var(--border);
+            background: white; border-radius: 10px; font-weight: 600;
+            cursor: pointer; font-size: 0.9rem; color: var(--text-muted);
+        }
+        .btn-confirm {
+            flex: 2; padding: 12px; background: linear-gradient(135deg, #25D366, #128C7E);
+            color: white; border: none; border-radius: 10px; font-weight: 700;
+            cursor: pointer; font-size: 0.95rem; display: flex;
+            align-items: center; justify-content: center; gap: 8px;
+        }
+
+        /* WATERMARK LOGO */
+        #mainImageBox { position: relative; }
+        #mainImageBox::after {
+            content: ""; position: absolute; bottom: 200px; right: 150px;
+            width: 80px; height: 80px;
+            background-image: url('https://ik.imagekit.io/sentuhanmomen/logo.png?updatedAt=1780577184412');
+            background-size: contain; background-repeat: no-repeat;
+            background-position: right bottom; opacity: 0.5; pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="index.html" class="back-btn">← Katalog</a>
+    <div class="header-title">Form Pemesanan</div>
+    <div id="mitraBadgeHeader" style="font-size:0.8rem; color: var(--text-muted); font-weight:500;"></div>
+</header>
+
+<div class="progress-bar">
+    <div class="progress-steps">
+        <div class="step active" id="stepTab0" onclick="goToStep(0)">
+            <div class="step-circle" id="stepCircle0">1</div>
+            <div class="step-label">Produk</div>
+        </div>
+        <div class="step-line" id="stepLine0"></div>
+        <div class="step" id="stepTab1" onclick="goToStep(1)">
+            <div class="step-circle" id="stepCircle1">2</div>
+            <div class="step-label">Kustomisasi</div>
+        </div>
+        <div class="step-line" id="stepLine1"></div>
+        <div class="step" id="stepTab2" onclick="goToStep(2)">
+            <div class="step-circle" id="stepCircle2">3</div>
+            <div class="step-label">Jadwal & Area</div>
+        </div>
+        <div class="step-line" id="stepLine2"></div>
+        <div class="step" id="stepTab3" onclick="goToStep(3)">
+            <div class="step-circle" id="stepCircle3">4</div>
+            <div class="step-label">Konfirmasi</div>
+        </div>
+    </div>
+</div>
+
+<div class="order-container">
+
+    <div class="gallery-section">
+        <div class="main-image" id="mainImageBox" style="overflow: hidden; display: flex; justify-content: center; align-items: center; background: #f8f9fa;">
+            <img id="previewImage" src="https://raw.githubusercontent.com/bidanmotret-creator/sentuhanmomen3D/1e75ea207ee48e311feb0fff6d1a841644437546/12.png" alt="Gambar Utama" style="width: 100%; height: 100%; object-fit: cover; border-radius: 15px;">
+        </div>
+        
+        <div class="thumbnail-list" id="thumbnailContainer">
+            </div>
+        
+        <h1 class="prod-title" id="previewName">Memuat...</h1>
+        <p class="prod-desc" id="previewDesc">—</p>
+        <div class="base-price-row">
+            <div class="base-price-label">Harga Mulai</div>
+            <div class="base-price-val" id="previewBasePrice">Rp 0</div>
+        </div>
+        <div class="mitra-box">
+            <small>Dilayani oleh:</small>
+            <strong id="mitraInfoDisplay">—</strong>
+        </div>
+        <div class="includes-box" id="includesBox" style="display:none;">
+            <h4>Sudah Termasuk</h4>
+            <div id="includesList"></div>
+        </div>
+    </div>
+
+    <div class="config-section">
+
+        <div class="form-step active" id="formStep0">
+            <div class="section-header">
+                <div class="section-num">1</div>
+                <div>
+                    <div class="section-title-txt">Detail Pesanan</div>
+                    <div class="section-sub" id="step1Sub">Isi data subjek / bayi</div>
+                </div>
+            </div>
+
+            <div id="standardFields">
+                <div class="form-group">
+                    <label>Usia Subjek <span class="req">*</span> <span style="font-size:0.78rem; color:var(--text-muted); font-weight:400;">(mempengaruhi bahan & harga)</span></label>
+                    <select id="optUsia" onchange="hitungTotal()"></select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nama Panggilan <span class="req">*</span></label>
+                        <input type="text" id="custBabyName" placeholder="cth: Arkan, Baby Kenzo">
+                        <div class="error-msg" id="errBabyName">⚠ Nama wajib diisi</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Tanggal Lahir</label>
+                        <input type="date" id="custBabyDOB">
+                    </div>
+                </div>
+            </div>
+
+            <div id="customFields" style="display:none;">
+                <div class="section-header" style="border-bottom: none; margin-bottom: 10px; padding-bottom: 0;">
+                    <div class="section-num" style="background: linear-gradient(135deg, var(--teal), #008B8B);">✦</div>
+                    <div>
+                        <div class="section-title-txt">Rancang Bebas (A la Carte)</div>
+                        <div class="section-sub">Tambah cetakan per orang sesuai kebutuhan keluarga</div>
+                    </div>
+                </div>
+                <div id="castListContainer"></div>
+                <button class="btn-tambah" type="button" onclick="tambahCetakan()">+ Tambah Cetakan / Orang</button>
+            </div>
+
+            <div class="step-nav">
+                <button class="btn-next" onclick="nextStep(0)">Lanjut: Kustomisasi →</button>
+            </div>
+        </div>
+
+        <div class="form-step" id="formStep1">
+            <div class="section-header">
+                <div class="section-num">2</div>
+                <div>
+                    <div class="section-title-txt">Kustomisasi Tampilan</div>
+                    <div class="section-sub">Pilih warna, bingkai & aksesoris</div>
+                </div>
+            </div>
+
+            <div class="step-section" id="colorPickerSection" style="margin-bottom: 30px;">
+                <h3 style="font-size: 1rem; color: var(--teal); margin-bottom: 5px;">🎨 Pilih Warna & Material</h3>
+                <p style="color:var(--text-muted); font-size:0.85rem;">Pilih preferensi tekstur atau warna untuk setiap bagian.</p>
+                
+                <div id="colorPickerContainer" style="display: grid; grid-template-columns: 1fr; gap: 15px; margin: 15px 0;">
+                    </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: var(--teal-light); border-radius: 12px; border: 1px dashed var(--teal);">
+                    <h4 style="margin-top: 0; font-size: 0.9rem; color: var(--teal);">Preview Material Dipilih:</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap: 10px; text-align: center;">
+                        <div>
+                            <img id="previewCasting" src="" style="width: 100%; aspect-ratio: 1; border-radius: 10px; border: 1px solid #ddd; object-fit: cover; box-shadow: var(--shadow); background: #eee;">
+                            <small style="color: var(--text-muted); font-size: 0.65rem; font-weight: 600;">Cetakan</small>
+                        </div>
+                        <div>
+                            <img id="previewOuterFrame" src="" style="width: 100%; aspect-ratio: 1; border-radius: 10px; border: 1px solid #ddd; object-fit: cover; box-shadow: var(--shadow); background: #eee;">
+                            <small style="color: var(--text-muted); font-size: 0.65rem; font-weight: 600;">Bingkai</small>
+                        </div>
+                        <div>
+                            <img id="previewInnerFrame" src="" style="width: 100%; aspect-ratio: 1; border-radius: 10px; border: 1px solid #ddd; object-fit: cover; box-shadow: var(--shadow); background: #eee;">
+                            <small style="color: var(--text-muted); font-size: 0.65rem; font-weight: 600;">Background</small>
+                        </div>
+                        <div>
+                            <img id="previewEdge" src="" style="width: 100%; aspect-ratio: 1; border-radius: 10px; border: 1px solid #ddd; object-fit: cover; box-shadow: var(--shadow); background: #eee;">
+                            <small style="color: var(--text-muted); font-size: 0.65rem; font-weight: 600;">List</small>
+                        </div>
+                        <div>
+                            <img id="previewLabel" src="" style="width: 100%; aspect-ratio: 1; border-radius: 10px; border: 1px solid #ddd; object-fit: cover; box-shadow: var(--shadow); background: #eee;">
+                            <small style="color: var(--text-muted); font-size: 0.65rem; font-weight: 600;">Label</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-section" id="photoTierSection" style="display: none; margin-bottom: 30px;">
+                <h3 style="font-size: 1rem; color: var(--teal); margin-bottom: 5px;">📸 Pilih Paket Fotografi</h3>
+                <p style="color:var(--text-muted); font-size:0.85rem;">Pilih paket layanan yang sesuai dengan kebutuhan Anda.</p>
+                
+                <div id="photoTierGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 15px 0;">
+                    </div>
+            </div>
+
+            <div class="step-section" id="crossSellSection" style="display: none; background: var(--pink-light); padding: 16px; border-radius: 12px; border: 1.5px dashed var(--pink); margin-bottom: 25px;">
+    <h3 id="crossSellTitle" style="color: var(--pink); margin-top: 0; font-size: 1rem;">✨ Spesial Promo Bundling!</h3>
+    <p id="crossSellDesc" style="font-size: 0.82rem; color: var(--text-dark); margin-bottom: 12px;">Lengkapi momen ini. Tambahkan produk pendamping dengan harga subsidi khusus bundling.</p>
+    
+    <div style="display: flex; gap: 14px; align-items: center;">
+        <img id="crossSellPreviewImg" src="" style="width: 75px; height: 75px; border-radius: 8px; object-fit: cover; border: 2px solid white; box-shadow: var(--shadow); display: none;">
+        
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+            <select id="optCrossSell" onchange="updateCrossSellUi(); hitungTotal();" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--pink); font-weight: 600; color: var(--text-dark); background: white;">
+                </select>
+            
+            <div id="crossSellSavingsBadge" style="display: none; align-items: center; gap: 8px; font-size: 0.8rem; background: white; padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(255, 105, 180, 0.3); width: fit-content; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                <span style="color: var(--text-muted); text-decoration: line-through;" id="csNormalPrice">Rp 0</span>
+                <span style="color: #00C896; font-weight: 700;" id="csSavingsPrice">Hemat Rp 0</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+            <div class="step-section" id="aksesoriSection" style="margin-bottom: 20px;">
+                <h3 style="font-size: 1rem; color: var(--teal); margin-bottom: 5px;">🎁 Tambahan Aksesoris</h3>
+                <p style="color:var(--text-muted); font-size:0.85rem;">Lengkapi mahakarya Anda dengan detail ekstra (Opsional).</p>
+                
+                <div id="aksesoriGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 15px 0;">
+                    </div>
+
+                <div style="margin-top: 15px; padding: 15px; background: var(--bg); border: 1.5px solid var(--border); border-radius: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="font-size: 2rem;">📸</div>
+                            <div>
+                                <h4 style="margin: 0; font-size: 0.9rem; color: var(--text-dark);">Cetak Foto 5R/4R</h4>
+                                <p style="margin: 2px 0 0 0; font-size: 0.75rem; color: var(--text-muted);">+Rp 15.000 / lembar</p>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <button type="button" onclick="ubahQtyFoto(-1)" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--border); background: white; cursor: pointer; font-weight: bold; color: var(--teal);">-</button>
+                            <input type="number" id="qtyFoto" value="0" min="0" max="20" style="width: 50px; text-align: center; padding: 5px; border: 1px solid var(--border); border-radius: 6px; font-weight: bold;" readonly>
+                            <button type="button" onclick="ubahQtyFoto(1)" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--border); background: white; cursor: pointer; font-weight: bold; color: var(--teal);">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="summary-box">
+                <div class="summary-row"><span class="label" id="lblBase">Paket Dasar</span><span id="sumBase">Rp 0</span></div>
+                <div class="summary-row"><span class="label">Opsi Material & Finishing</span><span id="sumColor" style="color: var(--teal);">Rp 0</span></div>
+                <div class="summary-row"><span class="label">Aksesoris & Foto</span><span id="sumAddon">Rp 0</span></div>
+                
+                <div class="summary-total"><span>Total Estimasi</span><span id="totalDisplay">Rp 0</span></div>
+            </div>
+
+            <div class="step-nav">
+                <button class="btn-prev" onclick="prevStep(1)">← Kembali</button>
+                <button class="btn-next" onclick="nextStep(1)">Lanjut: Jadwal →</button>
+            </div>
+        </div>
+
+        <div class="form-step" id="formStep2">
+            <div class="section-header">
+                <div class="section-num">3</div>
+                <div>
+                    <div class="section-title-txt">Jadwal & Kontak</div>
+                    <div class="section-sub">Tentukan waktu & data pemesan</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Metode Pengerjaan <span class="req">*</span></label>
+                <select id="optLayanan" onchange="hitungTotal()"></select>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Tanggal Diinginkan <span class="req">*</span></label>
+                    <input type="date" id="custJadwal" min="">
+                    <div class="error-msg" id="errJadwal">⚠ Tanggal wajib diisi</div>
+                </div>
+                <div class="form-group">
+                    <label>Preferensi Waktu</label>
+                    <select id="optWaktu">
+                        <option value="Pagi (08.00 - 11.00)">Pagi (08.00 - 11.00)</option>
+                        <option value="Siang (11.00 - 14.00)">Siang (11.00 - 14.00)</option>
+                        <option value="Sore (14.00 - 17.00)">Sore (14.00 - 17.00)</option>
+                        <option value="Fleksibel">Fleksibel</option>
+                    </select>
+                </div>
+            </div>
+            <div class="jadwal-info">
+                <span>📅</span>
+                <span>Jadwal bersifat estimasi dan akan dikonfirmasi oleh mitra via WhatsApp.</span>
+            </div>
+
+            <div class="form-group" style="margin-top: 18px;">
+                <label>Alamat Lengkap <span style="font-size:0.78rem; color:var(--text-muted); font-weight:400;">(wajib jika Home Service)</span></label>
+                <textarea id="custAddress" rows="2" placeholder="Nama jalan, RT/RW, Kelurahan, patokan..."></textarea>
+            </div>
+
+            <div class="form-row" style="margin-top: 6px;">
+                <div class="form-group">
+                    <label>Nama Pemesan <span class="req">*</span></label>
+                    <input type="text" id="custName" placeholder="cth: Bunda Sari">
+                    <div class="error-msg" id="errName">⚠ Nama wajib diisi</div>
+                </div>
+                <div class="form-group">
+                    <label>No. WhatsApp Aktif <span class="req">*</span></label>
+                    <input type="tel" id="custWa" placeholder="cth: 08123456789" oninput="formatWA(this)">
+                    <div class="wa-preview" id="waPreview">✅ WA: <span id="waPreviewNum"></span></div>
+                    <div class="error-msg" id="errWa">⚠ Minimal 10 digit</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Catatan Tambahan</label>
+                <textarea id="custNotes" rows="2" placeholder="cth: Bayi sensitif kulit..."></textarea>
+            </div>
+
+            <div class="step-nav">
+                <button class="btn-prev" onclick="prevStep(2)">← Kembali</button>
+                <button class="btn-next" onclick="nextStep(2)">Review Pesanan →</button>
+            </div>
+        </div>
+
+        <div class="form-step" id="formStep3">
+            <div class="section-header">
+                <div class="section-num">4</div>
+                <div>
+                    <div class="section-title-txt">Review & Kirim</div>
+                    <div class="section-sub">Periksa detail sebelum dikirim via WA</div>
+                </div>
+            </div>
+
+            <div id="reviewContent"></div>
+
+            <div class="summary-box" style="margin-top: 0;">
+                <div class="summary-total"><span>Total Estimasi</span><span id="totalDisplayFinal">Rp 0</span></div>
+            </div>
+
+            <div style="background: var(--pink-light); border-radius: 10px; padding: 12px 14px; font-size: 0.82rem; color: var(--text-muted); margin-top: 14px; display: flex; gap: 8px;">
+                <span>💡</span><span>Harga bersifat estimasi. Konfirmasi akhir akan dikirim via WhatsApp.</span>
+            </div>
+
+            <button class="btn-submit-wa" onclick="bukaModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Kirim Pesanan via WhatsApp
+            </button>
+
+            <div style="text-align: center; margin-top: 12px;">
+                <button onclick="prevStep(3)" style="background:none; border:none; color: var(--text-muted); font-size:0.85rem; cursor:pointer; text-decoration:underline;">← Edit Pesanan</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="floating-total">
+    <div>
+        <div class="float-label">Total Estimasi</div>
+        <div class="float-price" id="floatPrice">Rp 0</div>
+    </div>
+    <button class="float-btn" onclick="scrollToForm()">Pesan Sekarang →</button>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box">
+        <div class="modal-header">
+            <div class="modal-icon">🎉</div>
+            <div class="modal-title">Konfirmasi Pesanan</div>
+            <div class="modal-subtitle">Periksa sekali lagi sebelum dikirim ke WhatsApp mitra</div>
+        </div>
+        <div class="order-number">
+            <small>Nomor Referensi</small>
+            <strong id="modalOrderNum">#BM-XXXXX</strong>
+        </div>
+        <div class="confirm-rows" id="modalConfirmRows"></div>
+        <div class="confirm-total">
+            <span>Total Estimasi</span>
+            <span id="modalTotal">Rp 0</span>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="tutupModal()">Cek Lagi</button>
+            <button class="btn-confirm" onclick="kirimWA()">Kirim ke WhatsApp ✓</button>
+        </div>
+    </div>
+</div>
+<script src="data-harga.js"></script>
+<script>
+    // ════════════════════════════════════════
+    //  INIT & STATE VARIABLES
+    // ════════════════════════════════════════
+    const GAS_WEBHOOK_URL = WEB_CONFIG.config?.gasWebhookUrl || ""; 
+    const HARGA_FOTO_PER_LEMBAR = 15000;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const kodeMitra = urlParams.get('mitra') || 'pusat';
+    const productId  = urlParams.get('product');
+    const isCustom   = urlParams.get('custom') === 'true';
+
+    const agen = WEB_CONFIG.mitra[kodeMitra] || WEB_CONFIG.mitra['pusat'];
+    let basePrice  = 0;
+    let finalTotal = 0;
+    let castCounter = 0;
+    let currentStep = 0;
+    let selectedProduct = null;
+
+    // STATE UNTUK PAKET FOTO & CROSS-SELL
+    let selectedPhotoTier = null;
+
+    // STATE UNTUK WARNA & AKSESORIS
+    let selectedColors = {
+        casting: { nama: "Gold Premium", color: "#FFD700", harga: 0, image: "https://via.placeholder.com/100/FFD700/FFFFFF?text=Gold" },
+        outerFrame: { nama: "Putih Bersih", color: "#FFFFFF", harga: 0, image: "https://via.placeholder.com/100/FFFFFF/000000?text=Putih" },
+        innerFrame: { nama: "Kertas Mat", color: "#F0F0F0", harga: 0, image: "https://via.placeholder.com/100/F0F0F0/000000?text=Mat" },
+        edge: { nama: "Gold", color: "#FFD700", harga: 0, image: "https://via.placeholder.com/100/FFD700/FFFFFF?text=Gold" },
+        label: { nama: "Gold", color: "#FFD700", harga: 0, image: "https://via.placeholder.com/100/FFD700/FFFFFF?text=Gold" }
+    };
+    let selectedAksesori = {};
+
+    const categoryMap = {
+        'Warna Cetakan': 'casting',
+        'Warna Bingkai Luar': 'outerFrame',
+        'Warna Bingkai Dalam': 'innerFrame',
+        'Warna List Pinggir Area': 'edge',
+        'Warna Label': 'label'
+    };
+
+    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+    document.getElementById('custJadwal').min = tomorrow.toISOString().split('T')[0];
+    document.getElementById('mitraInfoDisplay').textContent = `${agen.nama} — ${agen.lokasi}`;
+    document.getElementById('mitraBadgeHeader').textContent = agen.nama;
+
+    // ════════════════════════════════════════
+    //  RENDER OPTIONS 
+    // ════════════════════════════════════════
+    function renderSelect(data, id) {
+        const el = document.getElementById(id);
+        if (!el || !data) return;
+        el.innerHTML = data.map(d => `<option value="${d.harga}">${d.nama}${d.harga > 0 ? ' (+Rp '+d.harga.toLocaleString('id-ID')+')' : ''}</option>`).join('');
+    }
+
+    renderSelect(WEB_CONFIG.biayaUsia, 'optUsia');
+    renderSelect(WEB_CONFIG.biayaLayanan, 'optLayanan');
+
+    if (isCustom) {
+        document.getElementById('previewName').textContent = 'Kustomisasi Bebas';
+        document.getElementById('previewDesc').textContent = 'Bangun paket sesuai kebutuhan keluarga.';
+        renderGallery(['https://via.placeholder.com/500x400?text=Custom+Order']);
+        document.getElementById('standardFields').style.display = 'none';
+        document.getElementById('customFields').style.display = 'block';
+        tambahCetakan();
+    } else {
+        selectedProduct = WEB_CONFIG.products.find(p => p.id === productId);
+        if (!selectedProduct) { window.location.href = 'index.html'; }
+        else {
+            basePrice = selectedProduct.price;
+            document.getElementById('previewName').textContent = selectedProduct.name;
+            document.getElementById('previewDesc').textContent = selectedProduct.desc;
+            if (selectedProduct.includes?.length) {
+                document.getElementById('includesBox').style.display = 'block';
+                document.getElementById('includesList').innerHTML = selectedProduct.includes.map(i => `<div class="include-item"><span>✓</span> ${i}</div>`).join('');
+            }
+            renderGallery(selectedProduct.images);
+        }
+    }
+
+   // ════════════════════════════════════════
+    //  DYNAMIC KUSTOMISASI (FOTO VS HANDCASTING/CUSTOM)
+    // ════════════════════════════════════════
+    // ════════════════════════════════════════
+    //  DYNAMIC KUSTOMISASI (FOTO VS HANDCASTING/CUSTOM)
+    // ════════════════════════════════════════
+   // ═══════════════════════════════════════════════════════════════════════════
+// DYNAMIC KUSTOMISASI - LOGIKA INTEGRASI DATA LIVE CROSS-SELL & FOTO
+// ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
+// DYNAMIC KUSTOMISASI - LOGIKA INTEGRASI DATA LIVE CROSS-SELL & FOTO
+// ═══════════════════════════════════════════════════════════════════════════
+function renderDynamicKustomisasi() {
+    const isPhoto = selectedProduct?.isPhotoPackage || false;
+    
+    const colorSection = document.getElementById('colorPickerSection');
+    const photoTierSection = document.getElementById('photoTierSection');
+    const crossSellSection = document.getElementById('crossSellSection');
+    const crossSellSelect = document.getElementById('optCrossSell');
+    
+    if (isPhoto) {
+        // ▬▬▬ LAYOUT A: JIKA KLIEN MEMILIH PAKET FOTO STUDIO ▬▬▬
+        if(colorSection) colorSection.style.display = 'none'; 
+        if(photoTierSection) photoTierSection.style.display = 'block';
+        
+        if(crossSellSection) {
+            crossSellSection.style.display = 'block';
+            document.getElementById('crossSellTitle').innerHTML = '✨ Spesial Promo Bundling Handcasting!';
+            document.getElementById('crossSellDesc').innerHTML = 'Mumpung si kecil sedang sesi foto, abadikan juga ukuran tangannya hari ini dengan harga subsidi khusus.';
+        }
+        
+        // Render Paket Foto Tier (Grid Radio)
+        const grid = document.getElementById('photoTierGrid');
+        if(grid) {
+            grid.innerHTML = '';
+            if (!selectedPhotoTier && selectedProduct.packageTiers && selectedProduct.packageTiers.length > 0) {
+                selectedPhotoTier = selectedProduct.packageTiers[0]; 
+            }
+
+            if (selectedProduct.packageTiers) {
+                selectedProduct.packageTiers.forEach(tier => {
+                    const isSelected = selectedPhotoTier?.id === tier.id;
+                    const card = document.createElement('div');
+                    card.style.cssText = `border: 2px solid ${isSelected ? 'var(--teal)' : 'var(--border)'}; border-radius: 10px; padding: 14px; cursor: pointer; transition: all 0.2s; background: ${isSelected ? 'var(--teal-light)' : 'white'}; display: flex; flex-direction: column; gap: 6px;`;
+                    card.innerHTML = `
+                        <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-dark);">${tier.nama}</div>
+                        <div style="font-size: 0.9rem; color: var(--teal); font-weight: 700;">Rp ${tier.harga.toLocaleString('id-ID')}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4;">${tier.desc}</div>
+                    `;
+                    card.onclick = () => { selectedPhotoTier = tier; renderDynamicKustomisasi(); hitungTotal(); };
+                    grid.appendChild(card);
+                });
+            }
+        }
+
+        // SINKRONISASI GAMBAR BUMPER: Ambil opsi handcasting (Cross-Sell) dari spreadsheet
+        if (crossSellSelect && selectedProduct.crossSellOptions) {
+            crossSellSelect.innerHTML = selectedProduct.crossSellOptions.map(cs => 
+                `<option value="${cs.harga}" data-name="${cs.nama}" data-image="${cs.image ? cs.image.trim() : ''}" data-normal="${cs.hargaNormal || 0}">
+                    ${cs.nama} ${cs.harga > 0 ? `(+Rp ${cs.harga.toLocaleString('id-ID')})` : ''}
+                </option>`
+            ).join('');
+            updateCrossSellUi(); 
+        }
+
+    } else {
+        // ▬▬▬ LAYOUT B: JIKA KLIEN MEMILIH HANDCASTING / CUSTOM A LA CARTE ▬▬▬
+        if(colorSection) colorSection.style.display = 'block'; 
+        if(photoTierSection) photoTierSection.style.display = 'none';
+        
+        if(crossSellSection) {
+            crossSellSection.style.display = 'block'; 
+            document.getElementById('crossSellTitle').innerHTML = '📸 Tambah Sesi Foto Studio / Homecare!';
+            document.getElementById('crossSellDesc').innerHTML = 'Sempurnakan karya seni Handcasting ini dengan kenangan foto profesional. Dapatkan harga khusus bundling!';
+        }
+
+        renderColorPicker(); 
+
+        // SINKRONISASI GAMBAR BUMPER: Ambil opsi foto (Cross-Sell) dari spreadsheet
+        let photoOptions = WEB_CONFIG.crossSellPhoto || [];
+
+        // Pastikan opsi pertama selalu "Tidak, terima kasih" agar sistem tidak error saat loading awal
+        if (photoOptions.length === 0 || parseInt(photoOptions[0].harga) > 0) {
+            photoOptions = [
+                { id: "cs-none", nama: "Tidak, terima kasih", harga: 0, hargaNormal: 0, image: "" },
+                ...photoOptions
+            ];
+        }
+
+        if (crossSellSelect) {
+            crossSellSelect.innerHTML = photoOptions.map(cs => 
+                `<option value="${cs.harga}" data-name="${cs.nama}" data-image="${cs.image ? cs.image.trim() : ''}" data-normal="${cs.hargaNormal || 0}">
+                    ${cs.nama} ${cs.harga > 0 ? `(+Rp ${cs.harga.toLocaleString('id-ID')})` : ''}
+                </option>`
+            ).join('');
+            updateCrossSellUi(); 
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FUNGSI KONTROL VISUAL BUMPER UPSELL (CROSS-SELL)
+// ═══════════════════════════════════════════════════════════════════════════
+function updateCrossSellUi() {
+    const select = document.getElementById('optCrossSell');
+    const img = document.getElementById('crossSellPreviewImg');
+    const badge = document.getElementById('crossSellSavingsBadge');
+    const normalPriceEl = document.getElementById('csNormalPrice');
+    const savingsPriceEl = document.getElementById('csSavingsPrice');
+    
+    if (!select || select.selectedIndex < 0) return;
+
+    const selectedOption = select.options[select.selectedIndex];
+    const imageSrc = selectedOption.getAttribute('data-image');
+    const promoPrice = parseInt(select.value) || 0;
+    const normalPrice = parseInt(selectedOption.getAttribute('data-normal')) || 0;
+    const savings = normalPrice - promoPrice;
+
+    // 1. Sinkronisasi Preview Gambar
+    if (img) {
+        if (imageSrc && imageSrc.trim() !== '' && imageSrc !== 'undefined') {
+            img.src = imageSrc;
+            img.style.display = 'block';
+        } else {
+            img.style.display = 'none';
+            img.src = '';
+        }
+    }
+
+    // 2. Sinkronisasi Hitungan Hemat & Harga Coret
+    if (badge && normalPriceEl && savingsPriceEl) {
+        if (savings > 0 && promoPrice > 0) {
+            normalPriceEl.textContent = 'Normal: Rp ' + normalPrice.toLocaleString('id-ID');
+            savingsPriceEl.textContent = '✨ Hemat Rp ' + savings.toLocaleString('id-ID');
+            badge.style.display = 'inline-flex';
+        } else {
+            badge.style.display = 'none'; 
+        }
+    }
+}
+    // ════════════════════════════════════════
+    //  COLOR PICKER DENGAN GAMBAR KOTAK BESAR
+    // ════════════════════════════════════════
+    function renderColorPicker() {
+        const container = document.getElementById('colorPickerContainer');
+        if (!container) return;
+        container.innerHTML = '';
+        
+        WEB_CONFIG.customColors.forEach(category => {
+            const categoryKey = categoryMap[category.category];
+            const categoryDiv = document.createElement('div');
+            categoryDiv.style.cssText = `background: white; padding: 14px; border-radius: 12px; border: 1.5px solid var(--border);`;
+            
+            categoryDiv.innerHTML = `
+                <h4 style="margin: 0 0 12px 0; font-size: 0.88rem; color: var(--text-dark);">${category.category}</h4>
+                <div style="display: flex; flex-direction: column; gap: 8px;" id="colorOptions_${categoryKey}"></div>
+            `;
+            
+            const optionsDiv = categoryDiv.querySelector(`#colorOptions_${categoryKey}`);
+            
+            category.options.forEach(option => {
+                const radioDiv = document.createElement('label');
+                radioDiv.style.cssText = `
+                    display: flex; align-items: center; gap: 14px; padding: 10px; 
+                    border-radius: 10px; cursor: pointer; transition: all 0.2s;
+                    border: 1.5px solid transparent; background: var(--bg);
+                `;
+                
+                const isSelected = selectedColors[categoryKey]?.nama === option.nama;
+                if (isSelected) {
+                    radioDiv.style.background = 'var(--teal-light)';
+                    radioDiv.style.borderColor = 'var(--teal)';
+                }
+                
+                const imageSrc = option.image || `https://via.placeholder.com/100/${option.color.replace('#','')}?text=+`;
+                const visualElement = `<img src="${imageSrc}" style="width: 55px; height: 55px; border-radius: 10px; object-fit: cover; border: 1.5px solid #ccc; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">`;
+                
+                radioDiv.innerHTML = `
+                    <input type="radio" name="color_${categoryKey}" value="${option.color}" ${isSelected ? 'checked' : ''} style="display:none;" 
+                    onchange="updateColor('${categoryKey}', '${option.color}', '${option.nama}', ${option.harga}, '${imageSrc}')">
+                    ${visualElement}
+                    <div style="flex: 1; display:flex; flex-direction:column;">
+                        <span style="font-size: 0.95rem; font-weight: 600;">${option.nama}</span>
+                        ${option.harga > 0 ? `<span style="font-size: 0.8rem; color: var(--pink); font-weight: 700;">+Rp ${option.harga.toLocaleString('id-ID')}</span>` : '<span style="font-size: 0.75rem; color: var(--text-muted);">Gratis</span>'}
+                    </div>
+                `;
+                optionsDiv.appendChild(radioDiv);
+            });
+            container.appendChild(categoryDiv);
+        });
+    }
+
+    function updateColor(categoryKey, color, nama, harga, image) {
+        selectedColors[categoryKey] = { color, nama, harga, image };
+        
+        const previewMap = {
+            'casting': 'previewCasting', 'outerFrame': 'previewOuterFrame', 
+            'innerFrame': 'previewInnerFrame', 'edge': 'previewEdge', 'label': 'previewLabel'
+        };
+        const previewEl = document.getElementById(previewMap[categoryKey]);
+        if (previewEl && image) previewEl.src = image;
+        
+        renderColorPicker(); 
+        hitungTotal(); 
+    }
+
+    function initPreviewImages() {
+        document.getElementById('previewCasting').src = selectedColors.casting.image;
+        document.getElementById('previewOuterFrame').src = selectedColors.outerFrame.image;
+        document.getElementById('previewInnerFrame').src = selectedColors.innerFrame.image;
+        document.getElementById('previewEdge').src = selectedColors.edge.image;
+        document.getElementById('previewLabel').src = selectedColors.label.image;
+    }
+
+    // ════════════════════════════════════════
+    //  AKSESORIS MENU & FOTO
+    // ════════════════════════════════════════
+    function renderAksesoriMenu() {
+        const grid = document.getElementById('aksesoriGrid');
+        if(!grid) return;
+        grid.innerHTML = '';
+        
+        WEB_CONFIG.biayaAddon.forEach(addon => {
+            const isSelected = !!selectedAksesori[addon.id];
+            const card = document.createElement('div');
+            
+            card.className = `addon-card ${isSelected ? 'selected' : ''}`;
+            card.style.cssText = `
+                border: 1.5px solid ${isSelected ? 'var(--teal)' : 'var(--border)'};
+                border-radius: 10px; padding: 10px; cursor: pointer; transition: all 0.2s;
+                background: ${isSelected ? 'var(--teal-light)' : 'white'};
+                display: flex; gap: 12px; align-items: center;
+            `;
+            
+            const imageSrc = addon.image || `https://via.placeholder.com/100/F8F4EE/000000?text=+`;
+
+            card.innerHTML = `
+                <img src="${imageSrc}" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <div style="flex:1; text-align: left;">
+                    <div style="font-size: 0.85rem; font-weight: 600; line-height: 1.2; color: var(--text-dark);">${addon.nama}</div>
+                    <div style="font-size: 0.78rem; color: var(--pink); font-weight: 700; margin-top: 4px;">+Rp ${addon.harga.toLocaleString('id-ID')}</div>
+                </div>
+            `;
+            
+            card.onclick = () => {
+                if (selectedAksesori[addon.id]) delete selectedAksesori[addon.id];
+                else selectedAksesori[addon.id] = { nama: addon.nama, harga: addon.harga };
+                renderAksesoriMenu();
+                hitungTotal();
+            };
+            grid.appendChild(card);
+        });
+    }
+
+    function ubahQtyFoto(delta) {
+        const el = document.getElementById('qtyFoto');
+        if(!el) return;
+        let val = parseInt(el.value) || 0;
+        val += delta;
+        if (val < 0) val = 0;
+        if (val > 20) val = 20;
+        el.value = val;
+        hitungTotal();
+    }
+
+    // ════════════════════════════════════════
+    //  KALKULATOR UTAMA
+    // ════════════════════════════════════════
+    function hitungTotal() {
+        let options = parseInt(document.getElementById('optLayanan')?.value) || 0;
+        const isPhoto = selectedProduct?.isPhotoPackage || false;
+        
+        let colorCost = 0;
+        let crossSellCost = 0;
+
+        if (isCustom) {
+            let sumCetakan = 0;
+            document.querySelectorAll('.cast-item').forEach(row => {
+                const harga = parseInt(row.querySelector('.custom-cast-select')?.value) || 0;
+                const qty   = parseInt(row.querySelector('.custom-cast-qty')?.value) || 1;
+                sumCetakan += harga * qty;
+            });
+            basePrice = sumCetakan; 
+            Object.values(selectedColors).forEach(c => colorCost += (c.harga || 0));
+        } else if (isPhoto) {
+            // Harga paket dari tier yang dipilih
+            basePrice = selectedPhotoTier ? selectedPhotoTier.harga : (selectedProduct?.price || 0);
+            
+            // Harga dari dropdown cross sell
+            const csEl = document.getElementById('optCrossSell');
+            crossSellCost = csEl ? (parseInt(csEl.value) || 0) : 0;
+            // Tidak ada biaya warna material karena ini produk foto
+        } else {
+            // Produk Handcasting biasa
+            options += parseInt(document.getElementById('optUsia')?.value) || 0;
+            basePrice = selectedProduct?.price || 0;
+            Object.values(selectedColors).forEach(c => colorCost += (c.harga || 0));
+        }
+
+        if(document.getElementById('previewBasePrice')) {
+            document.getElementById('previewBasePrice').textContent = 'Rp ' + basePrice.toLocaleString('id-ID');
+        }
+
+        // Kalkulasi Aksesoris & Foto
+        let addonCost = 0;
+        Object.values(selectedAksesori).forEach(a => addonCost += (a.harga || 0));
+        const qtyFotoEl = document.getElementById('qtyFoto');
+        const qtyFoto = qtyFotoEl ? (parseInt(qtyFotoEl.value) || 0) : 0;
+        const fotoCost = qtyFoto * HARGA_FOTO_PER_LEMBAR;
+        addonCost += fotoCost;
+
+        finalTotal = basePrice + options + colorCost + addonCost + crossSellCost;
+
+        // Update Text DOM
+        if(document.getElementById('sumBase')) document.getElementById('sumBase').textContent = 'Rp ' + basePrice.toLocaleString('id-ID');
+        if(document.getElementById('sumColor')) document.getElementById('sumColor').textContent = '+Rp ' + colorCost.toLocaleString('id-ID');
+        
+        // Gabungkan nilai Addon dan Cross-sell di tampilan Ringkasan agar ringkas
+        if(document.getElementById('sumAddon')) document.getElementById('sumAddon').textContent = '+Rp ' + (addonCost + crossSellCost).toLocaleString('id-ID');
+        
+        ['totalDisplay','totalDisplayFinal','floatPrice'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = 'Rp ' + finalTotal.toLocaleString('id-ID');
+        });
+    }
+
+    // ════════════════════════════════════════
+    //  GALLERY LOGIC
+    // ════════════════════════════════════════
+    function pickThumb(el, imageSrc) {
+        document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+        const mainImage = document.getElementById('previewImage');
+        if (mainImage) mainImage.src = imageSrc;
+    }
+
+    function renderGallery(productImages) {
+        const mainImg = document.getElementById('previewImage');
+        const thumbContainer = document.getElementById('thumbnailContainer');
+        thumbContainer.innerHTML = '';
+        if (productImages && productImages.length > 0) {
+            mainImg.src = productImages[0];
+            productImages.forEach((imgUrl, index) => {
+                const isActive = index === 0 ? 'active' : '';
+                thumbContainer.insertAdjacentHTML('beforeend', `
+                    <div class="thumb ${isActive}" style="padding: 0; overflow: hidden;" onclick="pickThumb(this, '${imgUrl}')">
+                        <img src="${imgUrl}" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                `);
+            });
+        } else {
+            mainImg.src = 'https://via.placeholder.com/500?text=No+Image';
+        }
+    }
+
+    // ════════════════════════════════════════
+    //  CUSTOM BUILDER LOGIC
+    // ════════════════════════════════════════
+    function tambahCetakan() {
+        castCounter++;
+        const opts = WEB_CONFIG.customCetakan.map(c => `<option value="${c.harga}" data-name="${c.nama}">${c.nama} – Rp${c.harga.toLocaleString('id-ID')}</option>`).join('');
+        const container = document.getElementById('castListContainer');
+        if(!container) return;
+        container.insertAdjacentHTML('beforeend', `
+            <div class="cast-item" id="castRow_${castCounter}">
+                <div class="cast-item-header">
+                    <span class="cast-label">Cetakan ke-${castCounter}</span>
+                    <button class="btn-hapus" type="button" onclick="hapusCetakan(${castCounter})">Hapus ✖</button>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="margin-bottom:0;"><label>Tipe</label><select class="custom-cast-select" onchange="hitungTotal()">${opts}</select></div>
+                    <div class="form-group" style="margin-bottom:0;"><label>Jumlah</label><input type="number" class="custom-cast-qty" value="2" min="1" max="10" onchange="hitungTotal()"></div>
+                </div>
+                <div class="form-group" style="margin-top:12px; margin-bottom:0;"><label>Nama di Plakat</label><input type="text" class="custom-cast-name" placeholder="cth: Zara"></div>
+            </div>
+        `);
+        hitungTotal();
+    }
+    function hapusCetakan(id) { document.getElementById(`castRow_${id}`)?.remove(); hitungTotal(); }
+
+    // ════════════════════════════════════════
+    //  WA FORMATTER & VALIDATION
+    // ════════════════════════════════════════
+    function formatWA(input) {
+        let val = input.value.replace(/\D/g, '');
+        if (val.startsWith('08')) val = '62' + val.slice(1);
+        if (val.startsWith('8'))  val = '62' + val;
+        
+        const preview = document.getElementById('waPreview');
+        const previewNum = document.getElementById('waPreviewNum');
+        const err = document.getElementById('errWa');
+        
+        if (val.length >= 10) { preview.classList.add('show'); previewNum.textContent = val; err.classList.remove('show'); input.classList.remove('error'); } 
+        else { preview.classList.remove('show'); }
+        input.dataset.formatted = val;
+    }
+
+    function validateStep(n) {
+        let ok = true;
+        const isPhoto = selectedProduct?.isPhotoPackage || false;
+
+        if (n === 0 && !isCustom && !isPhoto) {
+            const name = document.getElementById('custBabyName');
+            if (!name.value.trim()) { name.classList.add('error'); document.getElementById('errBabyName').classList.add('show'); ok = false; } 
+            else { name.classList.remove('error'); document.getElementById('errBabyName').classList.remove('show'); }
+        }
+        if (n === 0 && isCustom) { if (!document.querySelector('.cast-item')) { alert('Minimal 1 cetakan.'); ok = false; } }
+        if (n === 2) {
+            const nm = document.getElementById('custName'); const wa = document.getElementById('custWa'); const jd = document.getElementById('custJadwal');
+            if (!nm.value.trim()) { nm.classList.add('error'); document.getElementById('errName').classList.add('show'); ok = false; } else { nm.classList.remove('error'); document.getElementById('errName').classList.remove('show'); }
+            if ((wa.dataset.formatted || wa.value).replace(/\D/g,'').length < 10) { wa.classList.add('error'); document.getElementById('errWa').classList.add('show'); ok = false; } else { wa.classList.remove('error'); document.getElementById('errWa').classList.remove('show'); }
+            if (!jd.value) { jd.classList.add('error'); document.getElementById('errJadwal').classList.add('show'); ok = false; } else { jd.classList.remove('error'); document.getElementById('errJadwal').classList.remove('show'); }
+        }
+        if (!ok) window.scrollTo({ top: 0, behavior: 'smooth' });
+        return ok;
+    }
+
+    function goToStep(n) { if (n <= currentStep) setStep(n); }
+    function prevStep(from) { setStep(from - 1); }
+    function nextStep(from) { if (!validateStep(from)) return; if (from === 2) buildReviewPanel(); setStep(from + 1); }
+    function setStep(n) {
+        currentStep = n;
+        document.querySelectorAll('.form-step').forEach((s, i) => s.classList.toggle('active', i === n));
+        [0,1,2,3].forEach(i => {
+            const tab = document.getElementById(`stepTab${i}`); const circle = document.getElementById(`stepCircle${i}`); const line = document.getElementById(`stepLine${i}`);
+            if(tab) tab.className = 'step' + (i === n ? ' active' : i < n ? ' done' : '');
+            if (circle) { if (i < n) circle.textContent = ''; else if (i > n) circle.textContent = i + 1; }
+            if (line) line.className = 'step-line' + (i < n ? ' done' : '');
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ════════════════════════════════════════
+    //  REVIEW & SEND WA
+    // ════════════════════════════════════════
+    function getOrderData() {
+        const layanan = document.getElementById('optLayanan').options[document.getElementById('optLayanan').selectedIndex]?.text.split('(')[0].trim();
+        const wa = (document.getElementById('custWa').dataset.formatted || document.getElementById('custWa').value).replace(/\D/g,'');
+        const jadwal = document.getElementById('custJadwal').value;
+        const waktu = document.getElementById('optWaktu').options[document.getElementById('optWaktu').selectedIndex]?.text;
+        const catatan = document.getElementById('custNotes').value || '—';
+        const alamat = document.getElementById('custAddress').value || '—';
+        const isPhoto = selectedProduct?.isPhotoPackage || false;
+
+        let warnaStr = "—";
+        if (!isPhoto) {
+            warnaStr = `Cetakan: ${selectedColors.casting.nama}, Luar: ${selectedColors.outerFrame.nama}, Dalam: ${selectedColors.innerFrame.nama}, List: ${selectedColors.edge.nama}, Label: ${selectedColors.label.nama}`;
+        }
+        
+        const addonsArr = Object.values(selectedAksesori).map(a => a.nama);
+        const qtyFotoEl = document.getElementById('qtyFoto');
+        const qtyFoto = qtyFotoEl ? (parseInt(qtyFotoEl.value) || 0) : 0;
+        if (qtyFoto > 0) addonsArr.push(`${qtyFoto}x Foto 5R/4R`);
+        
+        // Cek Cross-Sell
+        const csEl = document.getElementById('optCrossSell');
+        if (isPhoto && csEl && csEl.value > 0) {
+            const csName = csEl.options[csEl.selectedIndex].getAttribute('data-name');
+            addonsArr.push(`Bundling: ${csName}`);
+        }
+        
+        const addonsStr = addonsArr.length > 0 ? addonsArr.join(', ') : '—';
+
+        let paketInfo = '', subjectInfo = '';
+        if (isCustom) {
+            paketInfo = 'Custom A la Carte';
+            subjectInfo = [...document.querySelectorAll('.cast-item')].map((r,i) => `${r.querySelector('.custom-cast-qty').value}x ${r.querySelector('.custom-cast-select').options[r.querySelector('.custom-cast-select').selectedIndex].dataset.name} (${r.querySelector('.custom-cast-name').value || `Orang ke-${i+1}`})`).join(', ');
+        } else if (isPhoto) {
+            paketInfo = selectedProduct?.name || '';
+            // Ganti deskripsi paket jadi tier yang dipilih
+            if (selectedPhotoTier) paketInfo += ` (${selectedPhotoTier.nama})`;
+            subjectInfo = `${document.getElementById('custBabyName').value || '—'}`;
+        } else {
+            paketInfo = selectedProduct?.name || '';
+            subjectInfo = `${document.getElementById('custBabyName').value || '—'} — ${document.getElementById('optUsia').options[document.getElementById('optUsia').selectedIndex]?.text.split('(')[0].trim()}`;
+        }
+
+        return { nama: document.getElementById('custName').value, wa, paketInfo, subjectInfo, warnaStr, addonsStr, layanan, jadwal, waktu, catatan, alamat };
+    }
+
+    function buildReviewPanel() {
+        const d = getOrderData();
+        const isPhoto = selectedProduct?.isPhotoPackage || false;
+        let rows = [
+            ['Paket', d.paketInfo], 
+            [isCustom ? 'Cetakan' : (isPhoto ? 'Nama Subjek' : 'Bayi & Usia'), d.subjectInfo]
+        ];
+        
+        if(!isPhoto) rows.push(['Material', d.warnaStr]);
+        
+        rows.push(
+            ['Aksesoris & Ekstra', d.addonsStr], 
+            ['Layanan', d.layanan], 
+            ['Jadwal', `${d.jadwal} — ${d.waktu}`], 
+            ['Alamat', d.alamat], 
+            ['Pemesan', d.nama], 
+            ['WhatsApp', d.wa], 
+            ['Catatan', d.catatan]
+        );
+
+        document.getElementById('reviewContent').innerHTML = rows.map(([k,v]) => `<div style="display:flex; justify-content:space-between; padding:10px 0; font-size:0.88rem; border-bottom:1px solid var(--border);"><span style="color:var(--text-muted); width: 35%;">${k}</span><span style="font-weight:600; text-align:right; width: 60%; word-break: break-word;">${v || '—'}</span></div>`).join('');
+    }
+
+    function bukaModal() {
+        const d = getOrderData();
+        const num = '#BM-' + Array.from({length:6}, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)]).join('');
+        document.getElementById('modalOrderNum').textContent = num;
+        document.getElementById('modalTotal').textContent = 'Rp ' + finalTotal.toLocaleString('id-ID');
+        document.getElementById('modalConfirmRows').innerHTML = [['Paket', d.paketInfo], [isCustom?'Cetakan':'Subjek', d.subjectInfo], ['Layanan', d.layanan], [`Jadwal`, d.jadwal]].map(([k,v]) => `<div class="confirm-row"><span class="key">${k}</span><span class="val">${v || '—'}</span></div>`).join('');
+        document.getElementById('modalOverlay').classList.add('show'); document.getElementById('modalOverlay').dataset.orderNum = num;
+    }
+    function tutupModal() { document.getElementById('modalOverlay').classList.remove('show'); }
+
+    function kirimWA() {
+        const d  = getOrderData(); const num = document.getElementById('modalOverlay').dataset.orderNum;
+        const isPhoto = selectedProduct?.isPhotoPackage || false;
+        
+        let msg = `Halo *${agen.nama}*, saya pesan Layanan Bidan Motret:%0A%0A📋 *No:* ${num}%0A📦 *Paket:* ${d.paketInfo}%0A`;
+        msg += isCustom ? `👥 *Cetakan:*%0A${d.subjectInfo.split(', ').map(x=>`  - ${x}`).join('%0A')}%0A` : `👤 *Subjek:* ${d.subjectInfo}%0A`;
+        
+        if(!isPhoto) msg += `🎨 *Material:* ${d.warnaStr}%0A`;
+        
+        if (d.addonsStr !== '—') msg += `➕ *Ekstra:* ${d.addonsStr}%0A`;
+        msg += `📍 *Layanan:* ${d.layanan}%0A📅 *Jadwal:* ${d.jadwal} — ${d.waktu}%0A🏠 *Alamat:* ${d.alamat}%0A💰 *Total:* Rp ${finalTotal.toLocaleString('id-ID')}%0A👤 *Pemesan:* ${d.nama} / ${d.wa}%0A📝 *Note:* ${d.catatan}%0A%0AMohon konfirmasi jadwalnya ya. 🙏`;
+
+        if (GAS_WEBHOOK_URL && GAS_WEBHOOK_URL.startsWith('http')) fetch(GAS_WEBHOOK_URL, { method:'POST', body: JSON.stringify({ orderNum: num, mitra: kodeMitra, nama: d.nama, wa: d.wa, paket: d.paketInfo, subjek: d.subjectInfo, warna: d.warnaStr, aksesoris: d.addonsStr, layanan: d.layanan, jadwal: d.jadwal, waktu: d.waktu, alamat: d.alamat, catatan: d.catatan, total: finalTotal }), mode:'no-cors' }).catch(e=>console.log(e));
+        tutupModal(); window.open(`https://wa.me/${agen.wa}?text=${msg}`, '_blank');
+    }
+    function scrollToForm() { document.querySelector('.config-section').scrollIntoView({ behavior: 'smooth' }); }
+// ════════════════════════════════════════
+    //  KONEKSI LIVE API GOOGLE SHEETS (TAHAP 3)
+    // ════════════════════════════════════════
+   // ════════════════════════════════════════
+    //  KONEKSI LIVE API GOOGLE SHEETS
+    // ════════════════════════════════════════
+    const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbwY-7GjkQgzoFjJDLnhsK8kdKuEkqIrDv4QgTRhayMgydeAK5XyCdHAc1sKFBC4HD304w/exec?action=getMenuHarga";
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. Tampilkan status loading awal
+        document.getElementById('previewName').textContent = 'Sinkronisasi Data...';
+
+        // 2. Fetch Data
+        fetch(GOOGLE_SHEETS_API_URL)
+            .then(res => res.json())
+            .then(liveConfig => {
+                // SUNTIK SEMUA DATA LIVE DARI SHEET
+                WEB_CONFIG.products = liveConfig.products || [];
+                WEB_CONFIG.crossSellPhoto = liveConfig.crossSellPhoto || [];
+                WEB_CONFIG.customColors = liveConfig.customColors || [];
+                WEB_CONFIG.biayaAddon = liveConfig.biayaAddon || [];
+                WEB_CONFIG.biayaUsia = liveConfig.biayaUsia || [];
+                WEB_CONFIG.biayaLayanan = liveConfig.biayaLayanan || [];
+                WEB_CONFIG.customCetakan = liveConfig.customCetakan || [];
+                WEB_CONFIG.mitra = liveConfig.mitra || WEB_CONFIG.mitra;
+
+                // 3. LOGIKA RENDER BERDASARKAN JENIS PAKET (STANDAR VS CUSTOM)
+                if (isCustom) {
+                    // Cari data khusus paket custom yang baru saja kita buat di tab Produk_Utama
+                    selectedProduct = WEB_CONFIG.products.find(p => p.id === 'custom');
+                    
+                    if (selectedProduct) {
+                        document.getElementById('previewName').textContent = selectedProduct.name;
+                        document.getElementById('previewDesc').textContent = selectedProduct.desc;
+                        renderGallery(selectedProduct.images);
+                        
+                        // Normalisasi data 'includes' agar selalu dibaca sebagai array yang aman
+                        let incList = selectedProduct.includes;
+                        if (incList && typeof incList === 'string') {
+                            incList = incList.split(',').map(item => item.trim());
+                        }
+                        
+                        if (incList && incList.length > 0 && incList[0] !== "") {
+                            document.getElementById('includesBox').style.display = 'block';
+                            document.getElementById('includesList').innerHTML = incList.map(i => `<div class="include-item"><span>✓</span> ${i}</div>`).join('');
+                        } else {
+                            document.getElementById('includesBox').style.display = 'none';
+                        }
+                    } else {
+                        // Fallback aman jika baris 'custom' belum dibuat atau gagal termuat dari spreadsheet
+                        document.getElementById('previewName').textContent = 'Kustomisasi Bebas (A la Carte)';
+                        document.getElementById('previewDesc').textContent = 'Bangun paket sesuai kebutuhan keluarga.';
+                        renderGallery(['https://ik.imagekit.io/sentuhanmomen/SIBLING%203D/photo_6129446548404899457_w.jpg']);
+                    }
+                    
+                    document.getElementById('standardFields').style.display = 'none';
+                    document.getElementById('customFields').style.display = 'block';
+                    document.getElementById('castListContainer').innerHTML = '';
+                    castCounter = 0;
+                    tambahCetakan();
+                } else {
+                    // Logika untuk Paket Standar bawaan lama
+                    selectedProduct = WEB_CONFIG.products.find(p => p.id === productId);
+                    if (selectedProduct) {
+                        basePrice = selectedProduct.price;
+                        document.getElementById('previewName').textContent = selectedProduct.name;
+                        document.getElementById('previewDesc').textContent = selectedProduct.desc;
+                        
+                        // Normalisasi data 'includes' untuk Paket Standar
+                        let incList = selectedProduct.includes;
+                        if (incList && typeof incList === 'string') {
+                            incList = incList.split(',').map(item => item.trim());
+                        }
+
+                        if (incList && incList.length > 0 && incList[0] !== "") {
+                            document.getElementById('includesBox').style.display = 'block';
+                            document.getElementById('includesList').innerHTML = incList.map(i => `<div class="include-item"><span>✓</span> ${i}</div>`).join('');
+                        } else {
+                            document.getElementById('includesBox').style.display = 'none';
+                        }
+                        renderGallery(selectedProduct.images);
+                    }
+                }
+
+                // Render ulang komponen pilihan select option menggunakan data live dari Sheets
+                renderSelect(WEB_CONFIG.biayaUsia, 'optUsia');
+                renderSelect(WEB_CONFIG.biayaLayanan, 'optLayanan');
+
+                // Jalankan fungsi inisialisasi visual kustomisasi tampilan
+                initPreviewImages(); 
+                renderDynamicKustomisasi();
+                renderAksesoriMenu();
+                hitungTotal();
+            })
+            .catch(err => {
+                console.error("Gagal sinkronisasi:", err);
+            });
+    });
+</script>
